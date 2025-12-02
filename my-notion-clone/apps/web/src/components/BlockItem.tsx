@@ -1,6 +1,7 @@
 import { useRef, useState, KeyboardEvent, useLayoutEffect } from 'react';
 import { Block, BlockType } from '@my-notion/shared-types';
 import { toInlineHtml } from '../utils/inlineFormat';
+import { TableBlock } from './blocks/TableBlock';
 
 interface BlockItemProps {
   block: Block;
@@ -180,6 +181,40 @@ export function BlockItem(props: BlockItemProps) {
     return null;
   };
 
+  const renderContent = () => {
+    if (block.type === 'table') {
+        return (
+            <div className="w-full overflow-hidden" contentEditable={false}>
+                <TableBlock databaseId={block.content} />
+            </div>
+        );
+    }
+
+    return (
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onClick={(e) => {
+            const target = e.target as HTMLElement;
+            const pageId = target.getAttribute('data-page-id');
+            if (pageId) {
+                e.preventDefault();
+                onNavigateToPage(pageId);
+            }
+        }}
+        className={getBlockClassName(block)}
+        dangerouslySetInnerHTML={
+            !isFocused ? { __html: toInlineHtml(block.content) || '<br/>' } : undefined
+        }
+      />
+    );
+  };
+
   const style = {
     paddingLeft: `${depth * 24}px`, // 24px per level
   };
@@ -229,38 +264,11 @@ export function BlockItem(props: BlockItemProps) {
         <option value="todo">Todo</option>
         <option value="code">Code</option>
         <option value="divider">Divider</option>
+        <option value="table">Table</option>
       </select>
 
       {renderPrefix()}
-
-      <div
-        ref={(el) => {
-            ref.current = el;
-            registerRef(el);
-        }}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        onClick={(e) => {
-            const target = e.target as HTMLElement;
-            const pageId = target.getAttribute('data-page-id');
-            if (pageId) {
-                e.preventDefault();
-                // Don't navigate if editing? 
-                // Notion navigates on click even in edit mode if you click the link specifically?
-                // Actually Notion requires Ctrl+Click in edit mode usually, or just click.
-                // Let's just navigate.
-                onNavigateToPage(pageId);
-            }
-        }}
-        className={getBlockClassName(block)}
-        dangerouslySetInnerHTML={
-            !isFocused ? { __html: toInlineHtml(block.content) || '<br/>' } : undefined
-        }
-      />
+      {renderContent()}
     </div>
   );
 }

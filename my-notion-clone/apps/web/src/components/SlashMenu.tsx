@@ -16,6 +16,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   { id: 'todo', label: 'To-do list', type: 'todo', description: 'Track tasks with a to-do list.' },
   { id: 'code', label: 'Code', type: 'code', description: 'Capture a code snippet.' },
   { id: 'divider', label: 'Divider', type: 'divider', description: 'Visually divide blocks.' },
+  { id: 'table', label: 'Table', type: 'table', description: 'Insert a simple database table.' },
 ];
 
 interface SlashMenuProps {

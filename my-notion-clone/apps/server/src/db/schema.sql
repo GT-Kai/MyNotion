@@ -63,3 +63,42 @@ CREATE TABLE IF NOT EXISTS file_assets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_file_assets_workspace ON file_assets(workspace_id);
+
+-- Phase 5: Database MVP Tables
+
+CREATE TABLE IF NOT EXISTS databases (
+  id TEXT PRIMARY KEY,
+  page_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(page_id) REFERENCES pages(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_databases_page ON databases(page_id);
+
+CREATE TABLE IF NOT EXISTS database_columns (
+  id TEXT PRIMARY KEY,
+  database_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  options TEXT, -- JSON string
+  position INTEGER NOT NULL,
+  FOREIGN KEY(database_id) REFERENCES databases(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_database_columns_db ON database_columns(database_id);
+CREATE INDEX IF NOT EXISTS idx_database_columns_order ON database_columns(database_id, position);
+
+CREATE TABLE IF NOT EXISTS database_rows (
+  id TEXT PRIMARY KEY,
+  database_id TEXT NOT NULL,
+  data TEXT NOT NULL, -- JSON string { colId: value }
+  position INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(database_id) REFERENCES databases(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_database_rows_db ON database_rows(database_id);
+CREATE INDEX IF NOT EXISTS idx_database_rows_order ON database_rows(database_id, position);

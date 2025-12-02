@@ -20,26 +20,63 @@ export type BlockType =
   | 'heading1'
   | 'heading2'
   | 'heading3'
-  | 'bulleted_list_item'
-  | 'numbered_list_item'
   | 'todo'
+  | 'bulletList'
+  | 'orderedList'
   | 'quote'
   | 'code'
   | 'divider'
-  | 'image';
+  | 'table';
 
 export interface Block {
   id: string;
   pageId: string;
-  parentBlockId?: string | null;
   type: BlockType;
-  content: string;
+  content: string; // For 'table', this will store the databaseId
   props: Record<string, any>;
   index: number;
+  parentBlockId?: string;
   createdAt: string;
   updatedAt: string;
   version: number;
   remoteId?: string | null;
+}
+
+// --- Database Types ---
+
+export interface Database {
+  id: string;
+  pageId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ColumnType = 'text' | 'number' | 'select' | 'multi-select' | 'date' | 'checkbox' | 'url' | 'email';
+
+export interface DatabaseColumn {
+  id: string;
+  databaseId: string;
+  name: string;
+  type: ColumnType;
+  options?: string[]; // For select/multi-select (JSON string or array depending on context, let's say string[] for frontend)
+  position: number;
+}
+
+export interface DatabaseRow {
+  id: string;
+  databaseId: string;
+  data: Record<string, any>; // Key is columnId, Value is cell content
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// API Responses
+export interface DatabaseDetails {
+  database: Database;
+  columns: DatabaseColumn[];
+  rows: DatabaseRow[];
 }
 
 export interface Tag {

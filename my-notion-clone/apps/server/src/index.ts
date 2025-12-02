@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { registerPageRoutes } from './api/pages';
+import { databaseRoutes } from './api/databases';
 import path from 'path';
 
 const server = Fastify({
@@ -12,6 +13,7 @@ server.register(cors, {
 });
 
 registerPageRoutes(server);
+databaseRoutes(server);
 
 server.get('/api/health', async () => {
   return { status: 'ok' };

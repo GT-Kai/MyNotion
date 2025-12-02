@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { saveBlocksApi } from '../api/blocks';
 import { fetchPages } from '../api/pages';
+import { createDatabase } from '../api/databases';
 import { BlockItem } from './BlockItem';
 import { SortableBlockItem } from './SortableBlockItem';
 import { SlashMenu, SLASH_COMMANDS, SlashCommand } from './SlashMenu';
@@ -353,7 +354,7 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
     );
   };
 
-  const applySlashCommand = (blockId: string, cmd: SlashCommand) => {
+  const applySlashCommand = async (blockId: string, cmd: SlashCommand) => {
     const idx = blocks.findIndex(b => b.id === blockId);
     if (idx === -1) return;
 
@@ -367,6 +368,19 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
             content: '',
             props: {},
         };
+    } else if (cmd.type === 'table') {
+        try {
+            const db = await createDatabase(pageId, 'Untitled Database');
+            next[idx] = {
+                ...target,
+                type: 'table',
+                content: db.id,
+                props: {},
+            };
+        } catch (err) {
+            console.error('Failed to create table', err);
+            return;
+        }
     } else {
         next[idx] = {
             ...target,
@@ -380,16 +394,18 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
     scheduleSave(next);
     
     // Refocus
-    setTimeout(() => {
-        const el = blockRefs.current[blockId];
-        if (el) {
-            el.focus();
-            if (cmd.type !== 'divider') {
-                // Clear input value in DOM if needed (React should handle it but safety first)
-                el.innerText = '';
+    if (cmd.type !== 'table') {
+        setTimeout(() => {
+            const el = blockRefs.current[blockId];
+            if (el) {
+                el.focus();
+                if (cmd.type !== 'divider') {
+                    // Clear input value in DOM if needed (React should handle it but safety first)
+                    el.innerText = '';
+                }
             }
-        }
-    }, 0);
+        }, 0);
+    }
   };
 
   // --- Link Logic ---
