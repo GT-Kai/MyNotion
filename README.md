@@ -41,15 +41,15 @@ Currently in **Alpha / MVP** stage.
 - [x] **Nested Blocks**: Support parent-child relationships (indentation)
 - [x] **Keyboard Polish**: Arrow keys navigation, Enter/Backspace behaviors
 - [x] **Rich Text**: Inline styles (Bold, Italic, Link) via Markdown
-- [ ] **Slash Commands**: Type `/` to open a menu for creating blocks
-- [ ] **Drag & Drop**: Reorder blocks via dragging
-- [ ] **Selection**: Multi-block selection and operations
+- [x] **Slash Commands**: Type `/` to open a menu for creating blocks
+- [x] **Drag & Drop**: Reorder blocks via dragging
+- [x] **Selection**: Multi-block selection and operations
 
 ### Phase 2: UI & Polish
-- [ ] **Sidebar**: Collapsible sidebar with page tree
-- [ ] **Page Properties**: Icon, Cover Image, Created/Updated dates
-- [ ] **Better Styling**: Polish the "raw" look to match Notion's aesthetics
-- [ ] **Dark Mode**
+- [x] **Sidebar**: Collapsible sidebar with page tree
+- [x] **Page Properties**: Icon, Cover Image, Created/Updated dates
+- [x] **Better Styling**: Polish the "raw" look to match Notion's aesthetics
+- [x] **Dark Mode**
 
 ### Phase 3: Advanced Types
 - [ ] **Database/Collections**: Table view, Board view
@@ -62,7 +62,7 @@ Currently in **Alpha / MVP** stage.
 
 ---
 
-## 🛠 How to Run
+## How to Run
 
 1.  **Install Dependencies**
     ```bash
