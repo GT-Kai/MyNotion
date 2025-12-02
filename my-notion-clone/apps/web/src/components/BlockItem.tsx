@@ -32,6 +32,8 @@ interface BlockItemProps {
   onNavigateToPage: (pageId: string) => void;
   isFirst: boolean;
   isLast: boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  isDragging?: boolean;
 }
 
 export function BlockItem(props: BlockItemProps) {
@@ -61,6 +63,8 @@ export function BlockItem(props: BlockItemProps) {
     onLinkEnter,
     onLinkClose,
     onNavigateToPage,
+    dragHandleProps,
+    isDragging,
   } = props;
 
   const [isFocused, setIsFocused] = useState(false);
@@ -199,14 +203,24 @@ export function BlockItem(props: BlockItemProps) {
 
   return (
     <div 
-      className="flex items-start gap-2 py-1 group"
+      className={`flex items-start gap-2 py-1 group ${isDragging ? 'opacity-50' : ''}`}
       style={style}
     >
+      {/* Drag Handle */}
+      <button
+          type="button"
+          {...dragHandleProps}
+          className="mt-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-400 select-none opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Drag to move"
+      >
+         ⋮⋮
+      </button>
+
       {/* 类型选择 */}
       <select
         value={block.type}
         onChange={(e) => onChangeType(e.target.value as BlockType)}
-        className="text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent dark:text-gray-400"
+        className="text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent dark:text-gray-400 w-4"
       >
         <option value="paragraph">P</option>
         <option value="heading1">H1</option>

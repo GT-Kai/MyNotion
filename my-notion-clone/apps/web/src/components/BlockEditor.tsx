@@ -2,9 +2,23 @@ import { useState, useCallback, useRef, useMemo } from 'react';
 import { Block, BlockType, Page } from '@my-notion/shared-types';
 import { nanoid } from 'nanoid';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
 import { saveBlocksApi } from '../api/blocks';
 import { fetchPages } from '../api/pages';
 import { BlockItem } from './BlockItem';
+import { SortableBlockItem } from './SortableBlockItem';
 import { SlashMenu, SLASH_COMMANDS, SlashCommand } from './SlashMenu';
 import { LinkMenu } from './LinkMenu';
 
@@ -426,65 +440,118 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
       }, 0);
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const activeBlock = blocks.find((b) => b.id === activeId);
+    const overBlock = blocks.find((b) => b.id === overId);
+
+    if (!activeBlock || !overBlock) return;
+
+    // MVP: Only allow reordering within same parent
+    if (activeBlock.parentBlockId !== overBlock.parentBlockId) {
+        return;
+    }
+
+    const parentId = activeBlock.parentBlockId;
+
+    const siblings = blocks
+        .filter((b) => b.parentBlockId === parentId)
+        .sort((a, b) => a.index - b.index);
+
+    const oldIndex = siblings.findIndex((b) => b.id === activeId);
+    const newIndex = siblings.findIndex((b) => b.id === overId);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+        const newSiblings = arrayMove(siblings, oldIndex, newIndex).map((b, i) => ({
+            ...b,
+            index: i,
+        }));
+
+        const nextBlocks = blocks.map((b) => {
+            const updated = newSiblings.find((s) => s.id === b.id);
+            return updated || b;
+        });
+
+        scheduleSave(nextBlocks);
+    }
+  };
+
   // --- Rendering ---
 
   const renderNodes = (nodes: BlockNode[], depth: number = 0) => {
     return nodes.map((node) => (
       <div key={node.id}>
-        <BlockItem
-          block={node}
-          depth={depth}
-          onChangeContent={(content) => updateBlockContent(node.id, content)}
-          onChangeType={(type) => updateBlockType(node.id, type)}
-          onToggleTodo={() => toggleTodoChecked(node.id)}
-          onEnter={() => addBlockAfter(node.id)}
-          onDeleteEmpty={() => deleteBlock(node.id)}
-          onIndent={() => indentBlock(node.id)}
-          onOutdent={() => outdentBlock(node.id)}
-          // Refs & Nav
-          registerRef={(el) => (blockRefs.current[node.id] = el)}
-          onArrowUp={() => focusPrev(node.id)}
-          onArrowDown={() => focusNext(node.id)}
-          // Slash
-          onSlash={(query) => handleSlashChange(node.id, query)}
-          slashMenuOpen={slashState?.blockId === node.id}
-          onSlashArrowUp={() => setSlashState(prev => prev ? ({ ...prev, selectedIndex: Math.max(0, prev.selectedIndex - 1) }) : null)}
-          onSlashArrowDown={() => setSlashState(prev => {
-              if (!prev) return null;
-              const max = getAvailableCommands().length - 1;
-              return { ...prev, selectedIndex: Math.min(max, prev.selectedIndex + 1) };
-          })}
-          onSlashEnter={() => {
-              if (slashState) {
-                  const cmds = getAvailableCommands();
-                  if (cmds[slashState.selectedIndex]) {
-                      applySlashCommand(slashState.blockId, cmds[slashState.selectedIndex]);
-                  }
-              }
-          }}
-          onSlashClose={() => setSlashState(null)}
-          // Link
-          onLink={(query) => handleLinkChange(node.id, query)}
-          linkMenuOpen={linkState?.blockId === node.id}
-          onLinkArrowUp={() => setLinkState(prev => prev ? ({ ...prev, selectedIndex: Math.max(0, prev.selectedIndex - 1) }) : null)}
-          onLinkArrowDown={() => setLinkState(prev => {
-              if (!prev) return null;
-              const max = getFilteredPages().length - 1;
-              return { ...prev, selectedIndex: Math.min(max, prev.selectedIndex + 1) };
-          })}
-          onLinkEnter={() => {
-              if (linkState) {
-                  const pg = getFilteredPages();
-                  if (pg[linkState.selectedIndex]) {
-                      applyLinkCommand(linkState.blockId, pg[linkState.selectedIndex]);
-                  }
-              }
-          }}
-          onLinkClose={() => setLinkState(null)}
-          onNavigateToPage={onNavigateToPage}
-          isFirst={false} 
-          isLast={false}
-        />
+        <SortableBlockItem id={node.id}>
+            {({ dragHandleProps, isDragging }) => (
+                <BlockItem
+                    block={node}
+                    depth={depth}
+                    onChangeContent={(content) => updateBlockContent(node.id, content)}
+                    onChangeType={(type) => updateBlockType(node.id, type)}
+                    onToggleTodo={() => toggleTodoChecked(node.id)}
+                    onEnter={() => addBlockAfter(node.id)}
+                    onDeleteEmpty={() => deleteBlock(node.id)}
+                    onIndent={() => indentBlock(node.id)}
+                    onOutdent={() => outdentBlock(node.id)}
+                    // Refs & Nav
+                    registerRef={(el) => (blockRefs.current[node.id] = el)}
+                    onArrowUp={() => focusPrev(node.id)}
+                    onArrowDown={() => focusNext(node.id)}
+                    // Slash
+                    onSlash={(query) => handleSlashChange(node.id, query)}
+                    slashMenuOpen={slashState?.blockId === node.id}
+                    onSlashArrowUp={() => setSlashState(prev => prev ? ({ ...prev, selectedIndex: Math.max(0, prev.selectedIndex - 1) }) : null)}
+                    onSlashArrowDown={() => setSlashState(prev => {
+                        if (!prev) return null;
+                        const max = getAvailableCommands().length - 1;
+                        return { ...prev, selectedIndex: Math.min(max, prev.selectedIndex + 1) };
+                    })}
+                    onSlashEnter={() => {
+                        if (slashState) {
+                            const cmds = getAvailableCommands();
+                            if (cmds[slashState.selectedIndex]) {
+                                applySlashCommand(slashState.blockId, cmds[slashState.selectedIndex]);
+                            }
+                        }
+                    }}
+                    onSlashClose={() => setSlashState(null)}
+                    // Link
+                    onLink={(query) => handleLinkChange(node.id, query)}
+                    linkMenuOpen={linkState?.blockId === node.id}
+                    onLinkArrowUp={() => setLinkState(prev => prev ? ({ ...prev, selectedIndex: Math.max(0, prev.selectedIndex - 1) }) : null)}
+                    onLinkArrowDown={() => setLinkState(prev => {
+                        if (!prev) return null;
+                        const max = getFilteredPages().length - 1;
+                        return { ...prev, selectedIndex: Math.min(max, prev.selectedIndex + 1) };
+                    })}
+                    onLinkEnter={() => {
+                        if (linkState) {
+                            const pg = getFilteredPages();
+                            if (pg[linkState.selectedIndex]) {
+                                applyLinkCommand(linkState.blockId, pg[linkState.selectedIndex]);
+                            }
+                        }
+                    }}
+                    onLinkClose={() => setLinkState(null)}
+                    onNavigateToPage={onNavigateToPage}
+                    isFirst={false} 
+                    isLast={false}
+                    dragHandleProps={dragHandleProps}
+                    isDragging={isDragging}
+                />
+            )}
+        </SortableBlockItem>
         {node.children.length > 0 && renderNodes(node.children, depth + 1)}
       </div>
     ));
@@ -493,6 +560,10 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
   const rootNodes = buildBlockTree(blocks);
   const availableCommands = getAvailableCommands();
   const filteredPages = getFilteredPages();
+
+  const visibleIds = useMemo(() => {
+      return flattenTree(rootNodes).map(n => n.id);
+  }, [rootNodes]); // rootNodes changes when blocks change, so this is safe
 
   // Calculate menu position
   let menuPos = { top: 0, left: 0 };
@@ -507,26 +578,37 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-32">
-      {renderNodes(rootNodes)}
-      
-      {slashState && availableCommands.length > 0 && (
-        <SlashMenu 
-            commands={availableCommands} 
-            selectedIndex={slashState.selectedIndex} 
-            onSelect={(cmd) => applySlashCommand(slashState.blockId, cmd)}
-            position={menuPos}
-        />
-      )}
+    <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter} 
+        onDragEnd={handleDragEnd}
+    >
+        <SortableContext 
+            items={visibleIds} 
+            strategy={verticalListSortingStrategy}
+        >
+            <div className="max-w-3xl mx-auto pb-32">
+              {renderNodes(rootNodes)}
+              
+              {slashState && availableCommands.length > 0 && (
+                <SlashMenu 
+                    commands={availableCommands} 
+                    selectedIndex={slashState.selectedIndex} 
+                    onSelect={(cmd) => applySlashCommand(slashState.blockId, cmd)}
+                    position={menuPos}
+                />
+              )}
 
-      {linkState && filteredPages.length > 0 && (
-        <LinkMenu
-            pages={filteredPages}
-            selectedIndex={linkState.selectedIndex}
-            onSelect={(page) => applyLinkCommand(linkState.blockId, page)}
-            position={menuPos}
-        />
-      )}
-    </div>
+              {linkState && filteredPages.length > 0 && (
+                <LinkMenu
+                    pages={filteredPages}
+                    selectedIndex={linkState.selectedIndex}
+                    onSelect={(page) => applyLinkCommand(linkState.blockId, page)}
+                    position={menuPos}
+                />
+              )}
+            </div>
+        </SortableContext>
+    </DndContext>
   );
 }
