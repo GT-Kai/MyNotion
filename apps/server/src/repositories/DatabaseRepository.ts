@@ -164,8 +164,29 @@ export class DatabaseRepository {
     };
   }
 
-  updateColumn(id: string, name: string): void {
-      const stmt = db.prepare('UPDATE database_columns SET name = ? WHERE id = ?');
-      stmt.run(name, id);
+  updateColumn(id: string, updates: { name?: string; type?: string; position?: number }): void {
+      const { name, type, position } = updates;
+      
+      const setParts: string[] = [];
+      const args: any[] = [];
+
+      if (name !== undefined) {
+          setParts.push('name = ?');
+          args.push(name);
+      }
+      if (type !== undefined) {
+          setParts.push('type = ?');
+          args.push(type);
+      }
+      if (position !== undefined) {
+          setParts.push('position = ?');
+          args.push(position);
+      }
+
+      if (setParts.length === 0) return;
+
+      args.push(id);
+      const stmt = db.prepare(`UPDATE database_columns SET ${setParts.join(', ')} WHERE id = ?`);
+      stmt.run(...args);
   }
 }

@@ -50,11 +50,11 @@ export async function createColumn(databaseId: string): Promise<DatabaseColumn> 
   return res.json();
 }
 
-export async function updateColumn(colId: string, name: string): Promise<void> {
+export async function updateColumn(colId: string, data: { name?: string; type?: string; position?: number }): Promise<void> {
   const res = await fetch(`${API_BASE}/database-columns/${colId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error('Failed to update column');
 }

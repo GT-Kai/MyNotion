@@ -70,12 +70,12 @@ export async function databaseRoutes(fastify: FastifyInstance) {
   );
 
   // Update Column
-  fastify.patch<{ Params: { colId: string }; Body: { name: string } }>(
+  fastify.patch<{ Params: { colId: string }; Body: { name?: string; type?: string; position?: number } }>(
     '/api/database-columns/:colId',
     async (request, reply) => {
       const { colId } = request.params;
-      const { name } = request.body;
-      repo.updateColumn(colId, name);
+      const { name, type, position } = request.body;
+      repo.updateColumn(colId, { name, type, position });
       return { success: true };
     }
   );

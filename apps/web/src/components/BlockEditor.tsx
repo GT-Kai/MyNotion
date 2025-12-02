@@ -154,6 +154,16 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
     scheduleSave(next);
   };
 
+  const updateBlockProps = (id: string, props: any) => {
+    const next = blocks.map((b) => {
+        if (b.id === id) {
+            return { ...b, props: { ...b.props, ...props } };
+        }
+        return b;
+    });
+    scheduleSave(next);
+  };
+
   const toggleTodoChecked = (id: string) => {
     const next = blocks.map((b) => {
       if (b.id !== id) return b;
@@ -377,6 +387,31 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
                 content: db.id,
                 props: {},
             };
+
+            // Insert new paragraph block after table so flow continues
+            const newBlock: Block = {
+                id: nanoid(),
+                pageId,
+                type: 'paragraph',
+                content: '',
+                props: {},
+                index: target.index + 1, // Approx index
+                parentBlockId: target.parentBlockId,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                version: 1
+            };
+            next.splice(idx + 1, 0, newBlock);
+            
+            // Simple reindex of siblings to be safe
+            const siblings = next.filter(b => b.parentBlockId === target.parentBlockId);
+            siblings.sort((a, b) => a.index - b.index).forEach((b, i) => b.index = i);
+
+            setTimeout(() => {
+                const el = blockRefs.current[newBlock.id];
+                if (el) el.focus();
+            }, 0);
+
         } catch (err) {
             console.error('Failed to create table', err);
             return;
@@ -503,6 +538,28 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
     }
   };
 
+  const handleAppendEmptyBlock = () => {
+      const lastBlock = blocks[blocks.length - 1];
+      const newBlock: Block = {
+          id: nanoid(),
+          pageId,
+          type: 'paragraph',
+          content: '',
+          props: {},
+          index: (lastBlock?.index ?? 0) + 1,
+          parentBlockId: null, 
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          version: 1
+      };
+      const next = [...blocks, newBlock];
+      scheduleSave(next);
+      setTimeout(() => {
+          const el = blockRefs.current[newBlock.id];
+          if (el) el.focus();
+      }, 0);
+  };
+
   // --- Rendering ---
 
   const renderNodes = (nodes: BlockNode[], depth: number = 0) => {
@@ -515,6 +572,7 @@ export function BlockEditor({ pageId, initialBlocks, onNavigateToPage }: BlockEd
                     depth={depth}
                     onChangeContent={(content) => updateBlockContent(node.id, content)}
                     onChangeType={(type) => updateBlockType(node.id, type)}
+                    onUpdateProps={(props) => updateBlockProps(node.id, props)}
                     onToggleTodo={() => toggleTodoChecked(node.id)}
                     onEnter={() => addBlockAfter(node.id)}
                     onDeleteEmpty={() => deleteBlock(node.id)}

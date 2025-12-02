@@ -35,6 +35,7 @@ interface BlockItemProps {
   isLast: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
   isDragging?: boolean;
+  onUpdateProps?: (props: any) => void;
 }
 
 export function BlockItem(props: BlockItemProps) {
@@ -43,6 +44,7 @@ export function BlockItem(props: BlockItemProps) {
     depth,
     onChangeContent,
     onChangeType,
+    onUpdateProps,
     onToggleTodo,
     onEnter,
     onDeleteEmpty,
@@ -185,7 +187,11 @@ export function BlockItem(props: BlockItemProps) {
     if (block.type === 'table') {
         return (
             <div className="w-full overflow-hidden" contentEditable={false}>
-                <TableBlock databaseId={block.content} />
+                <TableBlock 
+                    databaseId={block.content} 
+                    viewConfig={block.props?.view}
+                    onUpdateViewConfig={(view) => onUpdateProps?.({ view })}
+                />
             </div>
         );
     }
