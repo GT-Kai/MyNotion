@@ -3,7 +3,7 @@
 一个基于 React、Node.js 和 SQLite 构建的“本地优先” Notion 风格工作区。
 目前处于 **Alpha / MVP** 阶段。
 
-## 🏗 技术架构
+## 技术架构
 
 *   **架构**: 本地优先 (Local-First)，支持离线逻辑，目前通过本地 Node 进程服务
 *   **前端**: React, TypeScript, Vite, TailwindCSS, React Query
@@ -11,7 +11,7 @@
 *   **数据库**: 本地 SQLite 文件 (`apps/server/data/workspace.db`)
 *   **仓库管理**: Monorepo (npm/pnpm workspaces)
 
-## ✅ 当前进度 (已完成)
+## 当前进度 (已完成)
 
 ### 核心基建
 - [x] Monorepo 环境搭建 (Web + Server + Shared Types)
@@ -38,20 +38,20 @@
 
 ---
 
-## 🚧 路线图 (Roadmap)
+## 路线图 (Roadmap)
 
 ### 第一阶段: 核心编辑器体验 (当前重点)
 - [x] **嵌套块 (Nested Blocks)**: 支持父子层级关系 (缩进)
 - [x] **键盘交互优化**: 箭头键导航, 智能回车/删除
 - [x] **富文本**: 块内 Markdown 渲染
-- [ ] **斜杠命令 (Slash Commands)**: 输入 `/` 唤起菜单创建块
-- [ ] **拖拽排序 (Drag & Drop)**: 拖动块进行排序
+- [x] **斜杠命令 (Slash Commands)**: 输入 `/` 唤起菜单创建块
+- [x] **拖拽排序 (Drag & Drop)**: 拖动块进行排序
 
 ### 第二阶段: UI 与打磨
-- [ ] **侧边栏**: 可折叠的页面树状侧边栏
-- [ ] **页面属性**: 图标 (Icon), 封面图 (Cover), 创建/更新时间
-- [ ] **样式优化**: 优化 UI 细节，更接近 Notion 原生质感
-- [ ] **暗色模式**
+- [x] **侧边栏**: 可折叠的页面树状侧边栏
+- [x] **页面属性**: 图标 (Icon), 封面图 (Cover), 创建/更新时间
+- [x] **样式优化**: 优化 UI 细节，更接近 Notion 原生质感
+- [x] **暗色模式**
 
 ### 第三阶段: 高级类型
 - [ ] **数据库 (Database)**: 表格视图, 看板视图
@@ -64,7 +64,7 @@
 
 ---
 
-## 🛠 如何运行
+## 如何运行
 
 1.  **安装依赖**
     ```bash

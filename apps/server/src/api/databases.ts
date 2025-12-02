@@ -58,4 +58,25 @@ export async function databaseRoutes(fastify: FastifyInstance) {
       return { success: true };
     }
   );
+
+  // Create Column
+  fastify.post<{ Params: { id: string } }>(
+    '/api/databases/:id/columns',
+    async (request, reply) => {
+      const { id } = request.params;
+      const column = repo.createColumn(id);
+      return column;
+    }
+  );
+
+  // Update Column
+  fastify.patch<{ Params: { colId: string }; Body: { name: string } }>(
+    '/api/database-columns/:colId',
+    async (request, reply) => {
+      const { colId } = request.params;
+      const { name } = request.body;
+      repo.updateColumn(colId, name);
+      return { success: true };
+    }
+  );
 }

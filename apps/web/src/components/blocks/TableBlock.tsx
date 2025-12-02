@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchDatabase, updateRow, createRow } from '../../api/databases';
+import { fetchDatabase, updateRow, createRow, createColumn, updateColumn, deleteRow } from '../../api/databases';
 import { DatabaseRow, DatabaseColumn } from '@my-notion/shared-types';
 
 interface TableBlockProps {
@@ -25,6 +25,27 @@ export function TableBlock({ databaseId }: TableBlockProps) {
     }
   });
 
+  const deleteRowMutation = useMutation({
+    mutationFn: (rowId: string) => deleteRow(rowId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['database', databaseId]);
+    }
+  });
+
+  const createColumnMutation = useMutation({
+    mutationFn: () => createColumn(databaseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['database', databaseId]);
+    }
+  });
+
+  const updateColumnMutation = useMutation({
+    mutationFn: (vars: { colId: string; name: string }) => updateColumn(vars.colId, vars.name),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['database', databaseId]);
+    }
+  });
+
   if (isLoading) return <div className="text-gray-400 p-2 text-sm">Loading table...</div>;
   if (error) return <div className="text-red-400 p-2 text-sm">Error loading table</div>;
   if (!data) return null;
@@ -37,11 +58,19 @@ export function TableBlock({ databaseId }: TableBlockProps) {
         <thead>
           <tr>
             {columns.map(col => (
-              <th key={col.id} className="border-b border-r border-gray-200 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 w-[200px]">
-                {col.name}
+              <th key={col.id} className="border-b border-r border-gray-200 dark:border-gray-700 px-0 py-0 text-left font-medium text-gray-500 dark:text-gray-400 w-[200px] relative h-8">
+                <TableColumnHeader column={col} onUpdate={(name) => updateColumnMutation.mutate({ colId: col.id, name })} />
               </th>
             ))}
-             <th className="border-b border-gray-200 dark:border-gray-700 w-10"></th>
+             <th className="border-b border-gray-200 dark:border-gray-700 w-10 text-center p-0">
+                <button 
+                    onClick={() => createColumnMutation.mutate()}
+                    className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 w-full h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="New Column"
+                >
+                    +
+                </button>
+             </th>
           </tr>
         </thead>
         <tbody>
@@ -51,6 +80,7 @@ export function TableBlock({ databaseId }: TableBlockProps) {
                 row={row} 
                 columns={columns} 
                 onUpdate={(newData) => updateRowMutation.mutate({ rowId: row.id, data: newData })}
+                onDelete={() => deleteRowMutation.mutate(row.id)}
             />
           ))}
           <tr>
@@ -69,7 +99,30 @@ export function TableBlock({ databaseId }: TableBlockProps) {
   );
 }
 
-function TableRow({ row, columns, onUpdate }: { row: DatabaseRow, columns: DatabaseColumn[], onUpdate: (data: any) => void }) {
+function TableColumnHeader({ column, onUpdate }: { column: DatabaseColumn, onUpdate: (name: string) => void }) {
+    const [name, setName] = useState(column.name);
+    
+    useEffect(() => {
+        setName(column.name);
+    }, [column.name]);
+
+    const handleBlur = () => {
+        if (name !== column.name) {
+            onUpdate(name);
+        }
+    };
+
+    return (
+        <input
+            className="w-full h-full px-3 py-2 bg-transparent outline-none text-sm font-medium text-gray-600 dark:text-gray-300 focus:bg-gray-100 dark:focus:bg-gray-700"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={handleBlur}
+        />
+    );
+}
+
+function TableRow({ row, columns, onUpdate, onDelete }: { row: DatabaseRow, columns: DatabaseColumn[], onUpdate: (data: any) => void, onDelete: () => void }) {
     const [values, setValues] = useState(row.data);
     
     useEffect(() => {
@@ -87,7 +140,7 @@ function TableRow({ row, columns, onUpdate }: { row: DatabaseRow, columns: Datab
     };
 
     return (
-        <tr className="group hover:bg-gray-50 dark:hover:bg-gray-750">
+        <tr className="group hover:bg-gray-50 dark:hover:bg-gray-700">
             {columns.map(col => (
                 <td key={col.id} className="border-b border-r border-gray-200 dark:border-gray-700 px-0 py-0 h-8 relative">
                     <input
@@ -98,8 +151,14 @@ function TableRow({ row, columns, onUpdate }: { row: DatabaseRow, columns: Datab
                     />
                 </td>
             ))}
-            <td className="border-b border-gray-200 dark:border-gray-700 px-2 text-center">
-                
+            <td className="border-b border-gray-200 dark:border-gray-700 px-0 text-center w-10">
+                <button 
+                    onClick={onDelete}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1"
+                    title="Delete Row"
+                >
+                    🗑
+                </button>
             </td>
         </tr>
     );

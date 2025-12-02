@@ -137,4 +137,35 @@ export class DatabaseRepository {
     const stmt = db.prepare('DELETE FROM database_rows WHERE id = ?');
     stmt.run(rowId);
   }
+
+  createColumn(databaseId: string): DatabaseColumn {
+    const id = nanoid();
+    
+    const maxPosStmt = db.prepare('SELECT MAX(position) as maxPos FROM database_columns WHERE database_id = ?');
+    const { maxPos } = maxPosStmt.get(databaseId) as any;
+    const position = (maxPos !== null ? maxPos : -1) + 1;
+
+    const stmt = db.prepare(`
+      INSERT INTO database_columns (id, database_id, name, type, options, position)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    const name = 'New Column';
+    const type = 'text';
+    
+    stmt.run(id, databaseId, name, type, null, position);
+
+    return {
+      id,
+      databaseId,
+      name,
+      type,
+      position
+    };
+  }
+
+  updateColumn(id: string, name: string): void {
+      const stmt = db.prepare('UPDATE database_columns SET name = ? WHERE id = ?');
+      stmt.run(name, id);
+  }
 }
