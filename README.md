@@ -3,7 +3,7 @@
 A local-first "Notion-like" workspace built with React, Node.js, and SQLite.
 Currently in **Alpha / MVP** stage.
 
-## 🏗 Architecture
+## Architecture
 
 *   **Architecture**: Local-First (Offline capable logic, currently serving from local Node process)
 *   **Frontend**: React, TypeScript, Vite, TailwindCSS, React Query
@@ -11,7 +11,7 @@ Currently in **Alpha / MVP** stage.
 *   **Database**: Local SQLite file (`apps/server/data/workspace.db`)
 *   **Monorepo**: Managed via npm/pnpm workspaces
 
-## ✅ Current Status (Completed)
+## Current Status (Completed)
 
 ### Core Infrastructure
 - [x] Monorepo setup (Web + Server + Shared Types)
@@ -35,7 +35,7 @@ Currently in **Alpha / MVP** stage.
 
 ---
 
-## 🚧 Roadmap (The Gap to Notion)
+## Roadmap (The Gap to Notion)
 
 ### Phase 1: Core Editor Experience (Current Focus)
 - [x] **Nested Blocks**: Support parent-child relationships (indentation)
