@@ -1,0 +1,23 @@
+{
+  "name": "@my-notion/server",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@my-notion/shared-types": "*",
+    "fastify": "^4.0.0",
+    "better-sqlite3": "^8.0.0",
+    "nanoid": "^3.0.0",
+    "cors": "^2.8.5",
+    "@fastify/cors": "^8.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node-dev": "^2.0.0",
+    "@types/node": "^18.0.0",
+    "@types/better-sqlite3": "^7.0.0"
+  }
+}
